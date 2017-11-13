@@ -59,6 +59,7 @@ unset FTP_PASS
 
 # create the files directory if it doesn't exist
 mkdir -p ${FTP_DIR}
+adduser ${FTP_USER} -h ${FTP_DIR}
 
 # set permissions on the ftp directory
 if [ -z ${FTP_PERM} ]; then
