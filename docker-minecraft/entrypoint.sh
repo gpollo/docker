@@ -10,7 +10,7 @@ systemmode() {
     fi
 
     # fix permissions
-    chown -Rv minecraft:minecraft "/minecraft"
+    chown -v minecraft:minecraft "/minecraft"
 
     # start the user script
     su minecraft -c "/entrypoint.sh user" 
