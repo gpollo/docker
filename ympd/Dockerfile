@@ -1,36 +1,16 @@
-FROM alpine:3.3
-LABEL autors="@VITIMan, @TheNiceGuy"
+FROM alpine:latest AS builder
+RUN apk add openssl-dev libmpdclient-dev git cmake make gcc g++ \
+ && git clone https://github.com/notandy/ympd /ympd \
+ && mkdir -p /ympd/build \
+ && cd /ympd/build \
+ && cmake .. \
+ && make
 
-ENV YMPD_VERSION 1.3.0
-ENV LIBMPDCLIENT_INCLUDE_DIR /usr/lib/libmpdclient.so.2
+FROM alpine:latest AS deploy
+RUN apk add openssl libmpdclient bash
 
-RUN apk -q update \
-    && apk -q --no-progress add curl \
-    && apk -q --no-progress add cmake \
-    && apk -q --no-progress add libmpdclient \
-    && apk -q --no-progress add gcc \
-    && apk -q --no-progress add g++ \
-    && apk -q --no-progress add libmpdclient-dev \
-    && apk -q --no-progress add openssl-dev \
-    && apk -q --no-progress add make \
-    && apk -q --no-progress add bash
-
-
-RUN curl -fsSlL https://github.com/notandy/ympd/archive/v$YMPD_VERSION.tar.gz -o ympd.tar.gz \
-    && tar -xzf ympd.tar.gz \
-    && mkdir ympd-$YMPD_VERSION/build
-
-WORKDIR ympd-$YMPD_VERSION/build
-
-RUN cmake .. -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DCMAKE_INSTALL_PREFIX:PATH=/usr \
-    && make \
-    && make install
-
-RUN apk -q --no-progress del cmake gcc g++ openssl-dev libmpdclient-dev curl \
-    && rm -rf /var/cache/apk/*
-
-COPY run.sh /run.sh
+COPY entrypoint.sh /
+COPY --from=builder /ympd/build/ympd /usr/bin/ympd
 
 EXPOSE 8080
-
-ENTRYPOINT /run.sh
+ENTRYPOINT ["/entrypoint.sh"]

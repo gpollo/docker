@@ -20,5 +20,3 @@ fi
 
 set -o xtrace
 ympd -h "$HOST" -p "$PORT" -w 8080 $WEBPORT
-
-
