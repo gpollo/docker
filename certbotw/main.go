@@ -26,11 +26,11 @@ func generate_pkcs12(domain string, dryrun bool) {
 	args = append(args, []string{"-password", "pass:" + password}...)
 
 	output, err := exec.Command("openssl", args...).CombinedOutput()
+	fmt.Printf("%s", output)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	fmt.Printf("%s", output)
 }
 
 func generate_certificate(domain string, email string, dryrun bool) bool {
@@ -45,11 +45,11 @@ func generate_certificate(domain string, email string, dryrun bool) bool {
 	}
 
 	output, err := exec.Command("certbot", args...).CombinedOutput()
+	fmt.Printf("%s", output)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	fmt.Printf("%s", output)
 
 	matched, err := regexp.Match("not yet due for renewal", output)
 	if err != nil {
@@ -74,8 +74,8 @@ func run(domains []string, email string, dryrun bool) {
 			generate_pkcs12(domain, dryrun)
 		}
 
-		fmt.Printf("\n=> waiting a day\n\n")
-		time.Sleep(24 * time.Hour)
+		fmt.Printf("\n=> waiting a week\n\n")
+		time.Sleep(7 * 24 * time.Hour)
 	}
 }
 
