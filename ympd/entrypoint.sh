@@ -12,11 +12,22 @@ else
     PORT="6600"
 fi
 
-if [[ -n $SSL ]]; then
-    WEBPORT="-w $SSL"
+if [[ -n "$SSL_CERT" && -n "$SSL_KEY" ]]; then
+    if [[ ! -f "$SSL_CERT" ]]; then
+        printf "Error: couldn't find SSL certificate\n"
+        exit 1
+    fi
+
+    if [[ ! -f "$SSL_KEY" ]]; then
+        printf "Error: couldn't find SSL private key\n"
+        exit 1
+    fi
+
+    cat "$SSL_KEY" "$SSL_CERT" > "/ssl.pem"
+    WEBPORT="ssl://8080:/ssl.pem"
 else
-    WEBPORT=""
+    WEBPORT="8080"
 fi
 
 set -o xtrace
-ympd -h "$HOST" -p "$PORT" -w 8080 $WEBPORT
+ympd -h "$HOST" -p "$PORT" -w "$WEBPORT"
