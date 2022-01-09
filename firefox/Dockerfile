@@ -1,4 +1,4 @@
-FROM base/archlinux
+FROM archlinux:latest
 
 RUN pacman -Syu --noconfirm firefox
 RUN useradd -ms /bin/bash docker
