@@ -1,42 +1,34 @@
-FROM ubuntu:16.04
+FROM ubuntu:18.04
 
-# enable i386 packages
-RUN dpkg --add-architecture i386
+ENV TZ=America/Montreal
+ENV DEBIAN_FRONTEND=noninteractive
 
-# install some packages
-RUN apt-get update -y \
- && apt-get install -y tofrodos iproute gawk gcc git-core make net-tools \
-        ncurses-dev tftpd zlib1g-dev flex bison lib32ncursesw5 \
-        libncurses5-dev lib32z1 lib32stdc++6 libselinux1 xz-utils \
-        wget diffstat xvfb chrpath socat xterm autoconf libtool libtool-bin \
-        libssl-dev python  gnupg tar unzip texinfo locales lsb-release \
-        zlib1g:i386 build-essential libsdl1.2-dev libglib2.0-dev \
-        gcc-multilib cpio
+RUN dpkg --add-architecture i386 \
+ && apt-get -y update \
+ && apt-get -y upgrade \
+ && apt-get -y install tofrodos iproute2 gawk xvfb git make net-tools libncurses5-dev tftpd \
+ zlib1g:i386 libssl-dev flex bison libselinux1 gnupg wget diffstat chrpath socat xterm \
+ autoconf libtool libtool-bin tar unzip texinfo gcc-multilib build-essential libsdl1.2-dev \
+ libglib2.0-dev screen pax gzip sudo expect locales lsb-release cpio libgtk2.0 bc vim rsync \
+ && apt-get clean \
+ && rm -rf /var/lib/apt/lists/* \
+ && echo "dash dash/sh boolean false" | debconf-set-selections \
+ && dpkg-reconfigure dash \
+ && locale-gen en_US.UTF-8 \
+ && update-locale
 
-# use bash as /bin/sh
-RUN yes n | dpkg-reconfigure dash
+ENV INSTALLER=petalinux-v2021.1-final-installer.run
+WORKDIR /installer/
+COPY accept-eula.sh ${INSTALLER} /installer/
 
-# create a non-root user
-RUN groupadd --gid 1000 docker
-RUN useradd --uid 1000 --gid 1000 -ms "/bin/bash" docker
+RUN useradd petalinux \
+ && mkdir -p /opt/Xilinx/petalinux /home/petalinux/ \
+ && chown -Rv petalinux:petalinux /installer/ /opt/Xilinx/petalinux/ /home/petalinux \
+ && chmod +x ./* \
+ && sudo -u petalinux ./accept-eula.sh ./${INSTALLER} /opt/Xilinx/petalinux/ \
+ && cd / \
+ && rm -rf /installer/ /tmp/*
 
-# add en_US.UTF-8 locale
-RUN echo "en_US.UTF-8 UTF-8" >> "/etc/locale.gen"
-RUN locale-gen
-
-ENV LANG        "en_US.UTF-8"
-ENV LC_CTYPE    "en_US.UTF-8"
-ENV LC_MESSAGES "en_US.UTF-8"
-ENV LC_COLLATE  "en_US.UTF-8"
-
-# install bash 4.3.30
-WORKDIR /bash
-RUN wget "https://ftp.gnu.org/gnu/bash/bash-4.3.30.tar.gz"
-RUN tar -xvf "bash-4.3.30.tar.gz" \
- && cd "bash-4.3.30" \
- && ./configure \
- && make
-
-# run bash 4.3.30
-USER docker
-ENTRYPOINT ["bash-4.3.30/bash"]
+WORKDIR /petalinux
+ENV LANG=en_US.UTF-8
+USER petalinux
